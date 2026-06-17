@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WBT KI in der Kommunikation | Stadt Zürich</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt</a>
+    <header class="site-header" aria-label="Kopfbereich">
+      <div class="topbar">
+        <div class="brand" aria-label="Stadt Zürich">
+          <div class="brand-mark">Z</div>
+          <div>
+            <strong>Stadt Zürich</strong>
+            <span>Web based training</span>
+          </div>
+        </div>
+        <button id="resetProgress" class="ghost-button" type="button">Fortschritt zurücksetzen</button>
+      </div>
+      <div class="hero">
+        <p class="eyebrow">Kommunikation & KI</p>
+        <h1>KI in der Kommunikation verantwortungsvoll nutzen</h1>
+        <p>Ein kompaktes Training zu Prinzipien, Transparenz, Freigabe, Qualitätssicherung und praktischen Usecases entlang der Kommunikations-Journey.</p>
+      </div>
+    </header>
+
+    <main id="main" class="layout">
+      <aside class="sidebar" aria-label="Lektionsnavigation">
+        <div class="progress-card">
+          <span id="progressText">0 von 6 abgeschlossen</span>
+          <div class="progress-track"><div id="progressBar"></div></div>
+        </div>
+        <nav id="lessonNav"></nav>
+      </aside>
+
+      <section class="content" aria-live="polite">
+        <div id="lessonView"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Dieses WBT basiert auf den Kommunikationsprinzipien für KI und orientiert sich visuell an der sachlichen, kontrastreichen Gestaltung der Website der Stadt Zürich.</p>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
