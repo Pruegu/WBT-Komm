@@ -123,6 +123,7 @@ let answers = {};
 let flipped = {};
 let selectedUseCase = 0;
 let promptSelection = { ziel: true, kanal: true, ton: true, grenzen: true };
+let completed = false;
 
 const root = document.getElementById('root');
 
@@ -151,9 +152,15 @@ function render() {
       </footer>
     </main>`;
 
-  root.querySelectorAll('[data-step]').forEach((button) => button.addEventListener('click', () => { step = Number(button.dataset.step); render(); }));
-  root.querySelector('[data-prev]').addEventListener('click', () => { step = Math.max(0, step - 1); render(); });
-  root.querySelector('[data-next]').addEventListener('click', () => { step = Math.min(modules.length - 1, step + 1); render(); });
+  root.querySelectorAll('[data-step]').forEach((button) => button.addEventListener('click', () => { completed = false; step = Number(button.dataset.step); render(); }));
+  const previousButton = root.querySelector('[data-prev]');
+  const nextButton = root.querySelector('[data-next]');
+  if (previousButton) previousButton.addEventListener('click', () => { completed = false; step = Math.max(0, step - 1); render(); });
+  if (nextButton) nextButton.addEventListener('click', () => {
+    if (step === modules.length - 1) { completed = true; render(); return; }
+    step = Math.min(modules.length - 1, step + 1);
+    render();
+  });
   root.querySelectorAll('[data-q]').forEach((input) => input.addEventListener('change', (event) => { answers[event.target.dataset.q] = Number(event.target.value); render(); }));
   root.querySelectorAll('[data-flip]').forEach((button) => button.addEventListener('click', () => { flipped[button.dataset.flip] = !flipped[button.dataset.flip]; render(); }));
   root.querySelectorAll('[data-usecase]').forEach((button) => button.addEventListener('click', () => { selectedUseCase = Number(button.dataset.usecase); render(); }));
@@ -167,7 +174,7 @@ function content() {
   if (step === 3) return promptLabScreen();
   if (step === 4) return toolboxScreen();
   if (step === 5) return useCaseScreen();
-  return storyboardScreen();
+  return completed ? completionScreen() : storyboardScreen();
 }
 
 function startScreen() {
@@ -253,7 +260,7 @@ function promptLabScreen() {
       <div class="lab">
         <div class="builder">
           ${Object.entries(promptParts).map(([key, value]) => `
-            <label class="toggle">
+            <label class="toggle ${promptSelection[key] ? 'selected' : ''}">
               <input type="checkbox" data-prompt="${key}" ${promptSelection[key] ? 'checked' : ''}>
               <span>${key.toUpperCase()}</span>
               ${value}
@@ -332,6 +339,26 @@ function storyboardScreen() {
     </section>`;
 }
 
+function completionScreen() {
+  const score = quiz.reduce((sum, item, index) => sum + (answers[index] === item.c ? 1 : 0), 0);
+  return `
+    <section class="completion-screen">
+      <p class="eyebrow">Abschluss</p>
+      <h2>Gut gemacht – das WBT ist abgeschlossen.</h2>
+      <p class="lead">Du hast die wichtigsten Governance-Fragen, Kommunikationsprinzipien, Tool-Entscheide und Use-Case-Schablonen durchgespielt.</p>
+      <div class="certificate">
+        <h3>Dein Transferauftrag</h3>
+        <ol>
+          <li>Wähle einen echten Kommunikationsauftrag aus deiner Arbeit.</li>
+          <li>Formuliere einen Prompt mit Ziel, Zielgruppe, Kanal, Ton und Grenzen.</li>
+          <li>Prüfe Fakten, Datenschutz, Transparenz und Freigabe, bevor etwas publiziert wird.</li>
+        </ol>
+        <p><b>Quizstand:</b> ${score}/${quiz.length} richtig beantwortet.</p>
+      </div>
+      <button data-step="0">Nochmals starten</button>
+    </section>`;
+}
+
 function storyText(title) {
   const texts = {
     Lernziel: '«Ich kann KI in einem Kommunikationsprozess sinnvoll und verantwortungsvoll einsetzen.»',
@@ -349,7 +376,7 @@ function storyText(title) {
 function flipCard(id, title, example) {
   const isFlipped = flipped[id];
   return `
-    <button class="flip-card ${isFlipped ? 'flipped' : ''}" data-flip="${id}">
+    <button class="flip-card ${isFlipped ? 'flipped' : ''}" data-flip="${id}" aria-pressed="${isFlipped}">
       <span>${isFlipped ? 'Gutes Beispiel' : 'Karte umdrehen'}</span>
       <h3>${title}</h3>
       <p>${isFlipped ? example : 'Klicke, um ein konkretes Kommunikationsbeispiel zu sehen.'}</p>
@@ -380,8 +407,3 @@ function linkList() {
 }
 
 render();
-const links={gov:'https://www.stadt-zuerich.ch/de/politik-und-verwaltung/politik-und-recht/stadtratsbeschluesse/2025/08/stzh-strb-2025-2281.html',cd:'https://www.stadt-zuerich.ch/content/cd/de/index.html',sprache:'https://www.stadt-zuerich.ch/sprache',share:'https://szhglobal.sharepoint.com/:f:/r/sites/MSGR-00004091-KIundKommunikation/Shared%20Documents/KI%20und%20Kommunikation?csf=1&web=1&e=rJNzLT',zueria:'https://zueria.onszh.ch/'};
-const principles=['Zweck und Publikum zuerst: KI unterstützt ein klares Kommunikationsziel, ersetzt aber nicht Auftrag, Haltung und Verantwortung.','Kontext geben: Zielgruppe, Kanal, Tonalität, Sprachvorgaben, gewünschte Wirkung und Ausschlüsse präzise beschreiben.','Quellen und Fakten prüfen: KI-Resultate sind Entwürfe; Zahlen, Rechtsbezüge, Namen und Links werden verifiziert.','Datenschutz beachten: Nur freigegebene Daten und passende Tools je Datenklassifikation verwenden.','Transparent bleiben: KI-Einsatz offenlegen, wenn er für das Publikum relevant ist oder die Regelung es verlangt.','Bias und Barrierefreiheit prüfen: diskriminierende Muster, Verständlichkeit, geschlechtergerechte und leicht verständliche Sprache kontrollieren.'];
-const quiz=[{q:'Was gehört in einen guten Kommunikations-Prompt?',a:['Zielgruppe, Kanal, Wirkung, Tonalität und Grenzen','Nur ein möglichst kurzer Befehl','Vertrauliche Rohdaten, damit die KI alles weiss'],c:0},{q:'Ein KI-generiertes Zitat einer Stadträtin klingt passend. Was tun?',a:['Direkt publizieren','Als Entwurf behandeln und Quelle/Freigabe prüfen','Nur die Anführungszeichen entfernen'],c:1},{q:'Wann ist Transparenz besonders wichtig?',a:['Wenn KI-Einsatz Erwartung, Vertrauen oder Entscheidgrundlagen des Publikums beeinflusst','Nie, KI ist nur ein Schreibprogramm','Nur bei internen Mails ohne Aussenwirkung'],c:0},{q:'Welche Toolwahl ist grundsätzlich sicherer für verschiedene Datenklassifikationen?',a:['Irgendein öffentliches Tool','Das städtische Standardtool ZüriA gemäss Vorgaben','Private Accounts von Mitarbeitenden'],c:1}];
-const journey=['Auftrag & Rahmen klären: Briefing-Assistent erzeugt Fragen zu Ziel, Stakeholdern, Risiken und Freigaben.','Recherche: Quellenlandkarte fasst verifizierbare Grundlagen zusammen und markiert Prüfpunkte.','Konzeption & Ideenfindung: Varianten für Botschaft, Dramaturgie und Kanal-Mix als Workshop-Input.','Redaktion / Text: Erstentwurf in städtischer Sprache, inklusive Varianten für leicht verständliche Sprache.','Audiovisueller Content: Storyboard-, Alt-Text- und Bildbriefing-Entwürfe statt ungeprüfter Deep-Fake-Produktion.','Publikation & Weboptimierung: Metadaten, Teaser, Struktur und Auffindbarkeit für bestehende Inhalte optimieren.','Interaktion & Moderation: Antwortbausteine für wiederkehrende Fragen mit Eskalationskriterien vorbereiten.','Monitoring & Wirkungsanalyse: Auswertungsschema für Resonanz, Fragen, Sentiment und Learnings erstellen.'];
-let step=0,answers={};const root=document.getElementById('root');function icon(n){return `<span class="icon" aria-hidden="true">${n}</span>`}function render(){const progress=Math.round(((step+1)/5)*100);root.innerHTML=`<header><div class="brand"><div class="logo">Stadt<br>Zürich</div><div><b>Web Based Training</b><span>KI in der Kommunikation · ca. 10 Minuten</span></div></div><nav>${['Start','Governance','Prinzipien','Toolbox','Use-Cases'].map((n,i)=>`<button class="${step===i?'active':''}" data-step="${i}">${n}</button>`).join('')}</nav></header><main><div class="bar"><i style="width:${progress}%"></i></div>${content()}<footer><button ${step===0?'disabled':''} data-prev>Zurück</button><button data-next>Weiter ›</button></footer></main>`;root.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{step=+b.dataset.step;render()});root.querySelector('[data-prev]').onclick=()=>{step=Math.max(0,step-1);render()};root.querySelector('[data-next]').onclick=()=>{step=Math.min(4,step+1);render()};root.querySelectorAll('[data-q]').forEach(i=>i.onchange=e=>{answers[e.target.dataset.q]=+e.target.value;render()})}function content(){if(step===0)return `<section class="hero"><p class="eyebrow">Lernpfad für Kommunikationsteams</p><h1>KI wirksam, transparent und städtisch einsetzen.</h1><p>Dieses WBT führt in Governance, Toolwahl und zeitbeständige Rahmen-Use-Cases ein. Schwerpunkt sind Kommunikationsprinzipien mit kurzen Lernzielkontrollen.</p><div class="cards">${card('⚖','Governance','KI-Richtlinie, Transparenz, Deep Fakes und Sprache.')}${card('✓','Prinzipien','Sechs Merksätze für bessere Prompts und sichere Qualität.')}${card('→','Journey','Acht Platzhalter-Use-Cases entlang der Kommunikationsarbeit.')}</div></section>`;if(step===1)return `<section><h2>Governance: der sichere Rahmen</h2><div class="grid">${article('Anwendungsprinzipien','KI ist Assistenz. Menschen bleiben verantwortlich für Auftrag, Qualität, Freigabe und Wirkung.')}${article('Transparenzregelung','Offenlegen, wenn KI-Einsatz wesentlich ist: zum Beispiel bei synthetischen Bildern, automatisierten Dialogen oder erklärungsbedürftigen Inhalten.')}${article('Deep Fakes','Keine täuschenden synthetischen Personen, Stimmen oder Ereignisse. Audiovisuelle KI-Inhalte brauchen klare Kennzeichnung, Rechteprüfung und Freigabe.')}</div>${linkList()}</section>`;if(step===2){let score=quiz.reduce((s,x,i)=>s+(answers[i]===x.c?1:0),0);return `<section><h2>KI-Kommunikationsprinzipien</h2><ol class="principles">${principles.map((p,i)=>`<li><b>${i+1}</b><span>${p}</span></li>`).join('')}</ol><h3>Lernzielkontrolle</h3>${quiz.map((x,i)=>`<fieldset class="quiz"><legend>${x.q}</legend>${x.a.map((a,j)=>`<label class="${answers[i]===j?(j===x.c?'ok':'bad'):''}"><input type="radio" data-q="${i}" name="q${i}" value="${j}" ${answers[i]===j?'checked':''}>${a}</label>`).join('')}</fieldset>`).join('')}<p class="score">${icon('✓')} Ergebnis: ${score}/${quiz.length}. Ziel erreicht ab 3 Punkten.</p></section>`}if(step===3)return `<section><h2>Toolbox</h2>${tool('▣','Komm-spezifische KI-Werkzeuge','Sammlung, Vorlagen und Beispiele werden im SharePoint der Kommunikation gepflegt.',links.share,'SharePoint öffnen')}${tool('◆','Städtisches Standardtool','ZüriA ist als Standardtool für alle Datenklassifikationen vorgesehen. Vor Nutzung gelten die städtischen Vorgaben und Freigaben.',links.zueria,'ZüriA öffnen')}</section>`;return `<section><h2>Rahmen-Use-Cases entlang der Komm-Journey</h2><div class="timeline">${journey.map((j,i)=>`<div><b>${i+1}</b><p>${j}</p></div>`).join('')}</div><h3>Drehbuch-Vorlage</h3><p>Für jeden final ausgewählten Use-Case: Lernziel, Ausgangslage, KI-Interaktion, Qualitätscheck, Transparenzhinweis, Freigabe und Transferfrage ausfüllen.</p></section>`}function card(i,t,x){return `<div class="card">${icon(i)}<h3>${t}</h3><p>${x}</p></div>`}function article(t,x){return `<article><h3>${t}</h3><p>${x}</p></article>`}function tool(i,t,x,u,l){return `<div class="tool">${icon(i)}<div><h3>${t}</h3><p>${x}</p><a href="${u}">${l} ↗</a></div></div>`}function linkList(){return `<div class="links"><h3>Linkliste</h3>${[['KI-Richtlinie / Stadtratsbeschluss',links.gov],['CD-Manual / Erscheinungsbild',links.cd],['Sprache in der Verwaltung',links.sprache]].map(([t,u])=>`<a href="${u}">${t} ↗</a>`).join('')}</div>`}render();
